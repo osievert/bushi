@@ -492,7 +492,7 @@ n.newline()
 n.comment('Core source files all build into ninja library.')
 cxxvariables = []
 if platform.is_msvc():
-    cxxvariables = [('pdb', 'ninja.pdb')]
+    cxxvariables = [('pdb', 'bushi.pdb')]
 for name in ['build',
              'build_log',
              'clean',
@@ -534,15 +534,15 @@ else:
 if platform.is_aix():
     objs += cc('getopt')
 if platform.is_msvc():
-    ninja_lib = n.build(built('ninja.lib'), 'ar', objs)
+    bushi_lib = n.build(built('bushi.lib'), 'ar', objs)
 else:
-    ninja_lib = n.build(built('libninja.a'), 'ar', objs)
+    bushi_lib = n.build(built('libbushi.a'), 'ar', objs)
 n.newline()
 
 if platform.is_msvc():
-    libs.append('ninja.lib')
+    libs.append('bushi.lib')
 else:
-    libs.append('-lninja')
+    libs.append('-lbushi')
 
 if platform.is_aix() and not platform.is_os400_pase():
     libs.append('-lperfstat')
@@ -550,11 +550,11 @@ if platform.is_aix() and not platform.is_os400_pase():
 all_targets = []
 
 n.comment('Main executable is library plus main() function.')
-objs = cxx('ninja', variables=cxxvariables)
-ninja = n.build(binary('ninja'), 'link', objs, implicit=ninja_lib,
+objs = n.build(built('bushi' + objext), 'cxx', src('ninja.cc'), variables=cxxvariables)
+bushi = n.build(binary('bushi'), 'link', objs, implicit=bushi_lib,
                 variables=[('libs', libs)])
 n.newline()
-all_targets += ninja
+all_targets += bushi
 
 if options.bootstrap:
     # We've built the ninja binary.  Don't run any more commands
@@ -562,11 +562,11 @@ if options.bootstrap:
     # build.ninja file.
     n = ninja_writer
 
-n.comment('Tests all build into ninja_test executable.')
+n.comment('Tests all build into bushi_test executable.')
 
 objs = []
 if platform.is_msvc():
-    cxxvariables = [('pdb', 'ninja_test.pdb')]
+    cxxvariables = [('pdb', 'bushi_test.pdb')]
 
 for name in ['build_log_test',
              'build_test',
@@ -594,10 +594,10 @@ if platform.is_windows():
     for name in ['includes_normalize_test', 'msvc_helper_test']:
         objs += cxx(name, variables=cxxvariables)
 
-ninja_test = n.build(binary('ninja_test'), 'link', objs, implicit=ninja_lib,
+bushi_test = n.build(binary('bushi_test'), 'link', objs, implicit=bushi_lib,
                      variables=[('libs', libs)])
 n.newline()
-all_targets += ninja_test
+all_targets += bushi_test
 
 
 n.comment('Ancillary executables.')
@@ -617,7 +617,7 @@ for name in ['build_log_perftest',
     cxxvariables = [('pdb', name + '.pdb')]
   objs = cxx(name, variables=cxxvariables)
   all_targets += n.build(binary(name), 'link', objs,
-                         implicit=ninja_lib, variables=[('libs', libs)])
+                         implicit=bushi_lib, variables=[('libs', libs)])
 
 n.newline()
 
@@ -626,7 +626,7 @@ n.rule('gendot',
        command='./ninja -t graph all > $out')
 n.rule('gengraph',
        command='dot -Tpng $in > $out')
-dot = n.build(built('graph.dot'), 'gendot', ['ninja', 'build.ninja'])
+dot = n.build(built('graph.dot'), 'gendot', ['bushi', 'build.ninja'])
 n.build('graph.png', 'gengraph', dot)
 n.newline()
 
@@ -677,7 +677,7 @@ if not host.is_mingw():
                       os.path.normpath('$root/misc/ninja_syntax.py')])
     n.newline()
 
-n.default(ninja)
+n.default(bushi)
 n.newline()
 
 if host.is_linux():

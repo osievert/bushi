@@ -1,3 +1,21 @@
+# Bushi
+
+A lightly modified version of [ninja](https://github.com/ninja-build/ninja).
+
+Changes:
+- CMakeLists.txt change to create a libninja library (not just object files) to make including ninja
+  in other tools easier.
+
+## Approach
+
+All changes to this repo are made lightly, respecting the ninja upstream repo. This means commits
+are never made against the master branch, so bushi always "sits on top of ninja" and its
+modifications can be easily migrated to sit on different ninja versions (and maybe someday, find
+their way into the upstream ninja project). Bushi commits are made on branches named `bushi-x.y.z`
+based off of a ninja `vx.y.z` tag. Bushi tags are of the form `x.y.z-bushi` which also correspond to
+a ninja `vx.y.z` tag.
+
+Below is the original ninja readme, intact and unmodified.
 # Ninja
 
 Ninja is a small build system with a focus on speed.

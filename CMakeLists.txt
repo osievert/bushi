@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 include(CheckSymbolExists)
 include(CheckIPOSupported)
 
-project(ninja)
+project(bushi)
 
 # --- optional link-time optimization
 check_ipo_supported(RESULT lto_supported OUTPUT error)
@@ -44,12 +44,12 @@ if(RE2C)
 	endfunction()
 	re2c(${PROJECT_SOURCE_DIR}/src/depfile_parser.in.cc ${PROJECT_BINARY_DIR}/depfile_parser.cc)
 	re2c(${PROJECT_SOURCE_DIR}/src/lexer.in.cc ${PROJECT_BINARY_DIR}/lexer.cc)
-	add_library(libninja-re2c OBJECT ${PROJECT_BINARY_DIR}/depfile_parser.cc ${PROJECT_BINARY_DIR}/lexer.cc)
+	add_library(libbushi-re2c OBJECT ${PROJECT_BINARY_DIR}/depfile_parser.cc ${PROJECT_BINARY_DIR}/lexer.cc)
 else()
 	message(WARNING "re2c was not found; changes to src/*.in.cc will not affect your build.")
-	add_library(libninja-re2c OBJECT src/depfile_parser.cc src/lexer.cc)
+	add_library(libbushi-re2c OBJECT src/depfile_parser.cc src/lexer.cc)
 endif()
-target_include_directories(libninja-re2c PRIVATE src)
+target_include_directories(libbushi-re2c PRIVATE src)
 
 # --- Check for 'browse' mode support
 function(check_platform_supports_browse_mode RESULT)
@@ -88,8 +88,49 @@ endfunction()
 
 check_platform_supports_browse_mode(platform_supports_ninja_browse)
 
+set(LIBBUSHI_HEADERS
+    src/browse.h
+    src/build.h
+    src/build_log.h
+    src/clean.h
+    src/clparser.h
+    src/debug_flags.h
+    src/depfile_parser.h
+    src/deps_log.h
+    src/disk_interface.h
+    src/dyndep.h
+    src/dyndep_parser.h
+    src/edit_distance.h
+    src/eval_env.h
+    src/exit_status.h
+    src/getopt.h
+    src/graph.h
+    src/graphviz.h
+    src/hash_map.h
+    src/includes_normalize.h
+    src/json.h
+    src/lexer.h
+    src/line_printer.h
+    src/load_status.h
+    src/manifest_parser.h
+    src/metrics.h
+    src/missing_deps.h
+    src/msvc_helper.h
+    src/parser.h
+    src/state.h
+    src/status.h
+    src/string_piece.h
+    src/string_piece_util.h
+    src/subprocess.h
+    src/test.h
+    src/timestamp.h
+    src/util.h
+    src/version.h
+    src/win32port.h
+)
+
 # Core source files all build into ninja library.
-add_library(libninja OBJECT
+add_library(libbushi
 	src/build_log.cc
 	src/build.cc
 	src/clean.cc
@@ -116,7 +157,7 @@ add_library(libninja OBJECT
 	src/version.cc
 )
 if(WIN32)
-	target_sources(libninja PRIVATE
+	target_sources(libbushi PRIVATE
 		src/subprocess-win32.cc
 		src/includes_normalize-win32.cc
 		src/msvc_helper-win32.cc
@@ -125,20 +166,22 @@ if(WIN32)
 		src/minidump-win32.cc
 	)
 else()
-	target_sources(libninja PRIVATE src/subprocess-posix.cc)
+	target_sources(libbushi PRIVATE src/subprocess-posix.cc)
 	if(CMAKE_SYSTEM_NAME STREQUAL "OS400" OR CMAKE_SYSTEM_NAME STREQUAL "AIX")
-		target_sources(libninja PRIVATE src/getopt.c)
+		target_sources(libbushi PRIVATE src/getopt.c)
 	endif()
 
 	# Needed for perfstat_cpu_total
 	if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
-		target_link_libraries(libninja PUBLIC "-lperfstat")
+		target_link_libraries(libbushi PUBLIC "-lperfstat")
 	endif()
 endif()
 
+set_target_properties(libbushi PROPERTIES PUBLIC_HEADER "${LIBBUSHI_HEADERS}")
+
 #Fixes GetActiveProcessorCount on MinGW
 if(MINGW)
-target_compile_definitions(libninja PRIVATE _WIN32_WINNT=0x0601 __USE_MINGW_ANSI_STDIO=1)
+target_compile_definitions(libbushi PRIVATE _WIN32_WINNT=0x0601 __USE_MINGW_ANSI_STDIO=1)
 endif()
 
 # On IBM i (identified as "OS400" for compatibility reasons) and AIX, this fixes missing
@@ -148,11 +191,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL "OS400" OR CMAKE_SYSTEM_NAME STREQUAL "AIX")
 endif()
 
 # Main executable is library plus main() function.
-add_executable(ninja src/ninja.cc)
-target_link_libraries(ninja PRIVATE libninja libninja-re2c)
+add_executable(bushi src/ninja.cc)
+target_link_libraries(bushi PRIVATE libbushi libbushi-re2c)
 
 if(WIN32)
-  target_sources(ninja PRIVATE windows/ninja.manifest)
+  target_sources(bushi PRIVATE windows/ninja.manifest)
 endif()
 
 # Adds browse mode into the ninja binary if it's supported by the host platform.
@@ -171,8 +214,8 @@ if(platform_supports_ninja_browse)
 		VERBATIM
 	)
 
-	target_compile_definitions(ninja PRIVATE NINJA_HAVE_BROWSE)
-	target_sources(ninja PRIVATE src/browse.cc)
+	target_compile_definitions(bushi PRIVATE NINJA_HAVE_BROWSE)
+	target_sources(bushi PRIVATE src/browse.cc)
 	set_source_files_properties(src/browse.cc
 		PROPERTIES
 			OBJECT_DEPENDS "${PROJECT_BINARY_DIR}/build/browse_py.h"
@@ -184,7 +227,7 @@ endif()
 include(CTest)
 if(BUILD_TESTING)
   # Tests all build into ninja_test executable.
-  add_executable(ninja_test
+  add_executable(bushi_test
     src/build_log_test.cc
     src/build_test.cc
     src/clean_test.cc
@@ -207,9 +250,9 @@ if(BUILD_TESTING)
     src/util_test.cc
   )
   if(WIN32)
-    target_sources(ninja_test PRIVATE src/includes_normalize_test.cc src/msvc_helper_test.cc)
+    target_sources(bushi_test PRIVATE src/includes_normalize_test.cc src/msvc_helper_test.cc)
   endif()
-  target_link_libraries(ninja_test PRIVATE libninja libninja-re2c)
+  target_link_libraries(bushi_test PRIVATE libbushi libbushi-re2c)
 
   foreach(perftest
     build_log_perftest
@@ -220,7 +263,7 @@ if(BUILD_TESTING)
     manifest_parser_perftest
   )
     add_executable(${perftest} src/${perftest}.cc)
-    target_link_libraries(${perftest} PRIVATE libninja libninja-re2c)
+    target_link_libraries(${perftest} PRIVATE libbushi libbushi-re2c)
   endforeach()
 
   if(CMAKE_SYSTEM_NAME STREQUAL "AIX" AND CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -229,7 +272,12 @@ if(BUILD_TESTING)
     target_link_options(manifest_parser_perftest PRIVATE "-Wl,-bmaxdata:0x80000000")
   endif()
 
-  add_test(NAME NinjaTest COMMAND ninja_test)
+  add_test(NAME NinjaTest COMMAND bushi_test)
 endif()
 
-install(TARGETS ninja)
+install(TARGETS bushi libbushi
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+	PUBLIC_HEADER DESTINATION include/bushi
+)
+
