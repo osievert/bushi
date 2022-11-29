@@ -136,6 +136,7 @@ add_library(libbushi
 	src/bushi.cc
 	src/clean.cc
 	src/clparser.cc
+	src/depfile_parser.cc
 	src/dyndep.cc
 	src/dyndep_parser.cc
 	src/debug_flags.cc
@@ -146,6 +147,7 @@ add_library(libbushi
 	src/graph.cc
 	src/graphviz.cc
 	src/json.cc
+	src/lexer.cc
 	src/line_printer.cc
 	src/manifest_parser.cc
 	src/metrics.cc

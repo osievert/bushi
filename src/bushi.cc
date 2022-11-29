@@ -52,6 +52,8 @@
 #include "util.h"
 #include "version.h"
 
+#include "bushi.h"
+
 using namespace std;
 
 #ifdef _WIN32
@@ -62,27 +64,7 @@ int MSVCHelperMain(int argc, char** argv);
 void CreateWin32MiniDump(_EXCEPTION_POINTERS* pep);
 #endif
 
-namespace {
-
-struct Tool;
-
-/// Command-line options.
-struct Options {
-  /// Build file to load.
-  const char* input_file;
-
-  /// Directory to change into before running.
-  const char* working_dir;
-
-  /// Tool to run rather than building.
-  const Tool* tool;
-
-  /// Whether duplicate rules for one target should warn or print an error.
-  bool dupe_edges_should_err;
-
-  /// Whether phony cycles should warn or print an error.
-  bool phony_cycle_should_err;
-};
+// namespace {
 
 /// The Ninja main() loads up a series of data structures; various tools need
 /// to poke into these, so store them as fields on an object.
@@ -1437,6 +1419,7 @@ int ReadFlags(int* argc, char*** argv,
         break;
       case 'f':
         options->input_file = optarg;
+        printf("override input file from %s to %s\n", options->input_file, optarg);
         break;
       case 'j': {
         char* end;
@@ -1507,20 +1490,27 @@ int ReadFlags(int* argc, char*** argv,
   return -1;
 }
 
-NORETURN void real_main(int argc, char** argv) {
+int real_main(int argc, char** argv) {
   // Use exit() instead of return in this function to avoid potentially
   // expensive cleanup when destructing NinjaMain.
   BuildConfig config;
   Options options = {};
-  options.input_file = "build.ninja";
+  options.input_file = "build.bushi";
   options.dupe_edges_should_err = true;
 
-  setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
-  const char* ninja_command = argv[0];
+  for (int i = 0; i < argc; i++)
+    printf("arg %d: %s\n", i, argv[i]);
 
   int exit_code = ReadFlags(&argc, &argv, &options, &config);
   if (exit_code >= 0)
-    exit(exit_code);
+    return exit_code;
+
+  return bushi_execute(argc, argv, config, options);
+}
+
+int bushi_execute(int argc, char** argv, BuildConfig& config, Options& options) {
+  setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
+  const char* ninja_command = argv[0];
 
   Status* status = new StatusPrinter(config);
 
@@ -1541,7 +1531,7 @@ NORETURN void real_main(int argc, char** argv) {
     // None of the RUN_AFTER_FLAGS actually use a NinjaMain, but it's needed
     // by other tools.
     NinjaMain ninja(ninja_command, config);
-    exit((ninja.*options.tool->func)(&options, argc, argv));
+    return ((ninja.*options.tool->func)(&options, argc, argv));
   }
 
   // Limit number of rebuilds, to prevent infinite loops.
@@ -1560,46 +1550,46 @@ NORETURN void real_main(int argc, char** argv) {
     string err;
     if (!parser.Load(options.input_file, &err)) {
       status->Error("%s", err.c_str());
-      exit(1);
+      return (1);
     }
 
     if (options.tool && options.tool->when == Tool::RUN_AFTER_LOAD)
-      exit((ninja.*options.tool->func)(&options, argc, argv));
+      return ((ninja.*options.tool->func)(&options, argc, argv));
 
     if (!ninja.EnsureBuildDirExists())
-      exit(1);
+      return (1);
 
     if (!ninja.OpenBuildLog() || !ninja.OpenDepsLog())
-      exit(1);
+      return (1);
 
     if (options.tool && options.tool->when == Tool::RUN_AFTER_LOGS)
-      exit((ninja.*options.tool->func)(&options, argc, argv));
+      return ((ninja.*options.tool->func)(&options, argc, argv));
 
     // Attempt to rebuild the manifest before building anything else
     if (ninja.RebuildManifest(options.input_file, &err, status)) {
       // In dry_run mode the regeneration will succeed without changing the
       // manifest forever. Better to return immediately.
       if (config.dry_run)
-        exit(0);
+        return (0);
       // Start the build over with the new manifest.
       continue;
     } else if (!err.empty()) {
       status->Error("rebuilding '%s': %s", options.input_file, err.c_str());
-      exit(1);
+      return (1);
     }
 
     int result = ninja.RunBuild(argc, argv, status);
     if (g_metrics)
       ninja.DumpMetrics();
-    exit(result);
+    return (result);
   }
 
   status->Error("manifest '%s' still dirty after %d tries, perhaps system time is not set",
       options.input_file, kCycleLimit);
-  exit(1);
+  return (1);
 }
 
-}  // anonymous namespace
+// }  // anonymous namespace
 
 int bushi_main(int argc, char** argv) {
 #if defined(_MSC_VER)
@@ -1617,6 +1607,6 @@ int bushi_main(int argc, char** argv) {
     return 2;
   }
 #else
-  real_main(argc, argv);
+  return real_main(argc, argv);
 #endif
 }
