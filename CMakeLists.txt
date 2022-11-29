@@ -133,6 +133,7 @@ set(LIBBUSHI_HEADERS
 add_library(libbushi
 	src/build_log.cc
 	src/build.cc
+	src/bushi.cc
 	src/clean.cc
 	src/clparser.cc
 	src/dyndep.cc
