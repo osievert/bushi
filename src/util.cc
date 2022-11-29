@@ -64,7 +64,7 @@ using namespace std;
 
 void Fatal(const char* msg, ...) {
   va_list ap;
-  fprintf(stderr, "ninja: fatal: ");
+  fprintf(stderr, "build: fatal: ");
   va_start(ap, msg);
   vfprintf(stderr, msg, ap);
   va_end(ap);
@@ -81,7 +81,7 @@ void Fatal(const char* msg, ...) {
 }
 
 void Warning(const char* msg, va_list ap) {
-  fprintf(stderr, "ninja: warning: ");
+  fprintf(stderr, "build: warning: ");
   vfprintf(stderr, msg, ap);
   fprintf(stderr, "\n");
 }
@@ -94,7 +94,7 @@ void Warning(const char* msg, ...) {
 }
 
 void Error(const char* msg, va_list ap) {
-  fprintf(stderr, "ninja: error: ");
+  fprintf(stderr, "build: error: ");
   vfprintf(stderr, msg, ap);
   fprintf(stderr, "\n");
 }
@@ -107,7 +107,7 @@ void Error(const char* msg, ...) {
 }
 
 void Info(const char* msg, va_list ap) {
-  fprintf(stdout, "ninja: ");
+  fprintf(stdout, "build: ");
   vfprintf(stdout, msg, ap);
   fprintf(stdout, "\n");
 }
