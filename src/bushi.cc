@@ -92,7 +92,7 @@ struct NinjaMain : public BuildLogUser {
   DepsLog deps_log_;
 
   /// The type of functions that are the entry points to tools (subcommands).
-  typedef int (NinjaMain::*ToolFunc)(const Options*, int, char**);
+  typedef int (NinjaMain::*ToolFunc)(const bushi::Options*, int, char**);
 
   /// Get the Node for a given command-line path, handling features like
   /// spell correction.
@@ -103,23 +103,23 @@ struct NinjaMain : public BuildLogUser {
                               vector<Node*>* targets, string* err);
 
   // The various subcommands, run via "-t XXX".
-  int ToolGraph(const Options* options, int argc, char* argv[]);
-  int ToolQuery(const Options* options, int argc, char* argv[]);
-  int ToolDeps(const Options* options, int argc, char* argv[]);
-  int ToolMissingDeps(const Options* options, int argc, char* argv[]);
-  int ToolBrowse(const Options* options, int argc, char* argv[]);
-  int ToolMSVC(const Options* options, int argc, char* argv[]);
-  int ToolTargets(const Options* options, int argc, char* argv[]);
-  int ToolCommands(const Options* options, int argc, char* argv[]);
-  int ToolInputs(const Options* options, int argc, char* argv[]);
-  int ToolClean(const Options* options, int argc, char* argv[]);
-  int ToolCleanDead(const Options* options, int argc, char* argv[]);
-  int ToolCompilationDatabase(const Options* options, int argc, char* argv[]);
-  int ToolRecompact(const Options* options, int argc, char* argv[]);
-  int ToolRestat(const Options* options, int argc, char* argv[]);
-  int ToolUrtle(const Options* options, int argc, char** argv);
-  int ToolRules(const Options* options, int argc, char* argv[]);
-  int ToolWinCodePage(const Options* options, int argc, char* argv[]);
+  int ToolGraph(const bushi::Options* options, int argc, char* argv[]);
+  int ToolQuery(const bushi::Options* options, int argc, char* argv[]);
+  int ToolDeps(const bushi::Options* options, int argc, char* argv[]);
+  int ToolMissingDeps(const bushi::Options* options, int argc, char* argv[]);
+  int ToolBrowse(const bushi::Options* options, int argc, char* argv[]);
+  int ToolMSVC(const bushi::Options* options, int argc, char* argv[]);
+  int ToolTargets(const bushi::Options* options, int argc, char* argv[]);
+  int ToolCommands(const bushi::Options* options, int argc, char* argv[]);
+  int ToolInputs(const bushi::Options* options, int argc, char* argv[]);
+  int ToolClean(const bushi::Options* options, int argc, char* argv[]);
+  int ToolCleanDead(const bushi::Options* options, int argc, char* argv[]);
+  int ToolCompilationDatabase(const bushi::Options* options, int argc, char* argv[]);
+  int ToolRecompact(const bushi::Options* options, int argc, char* argv[]);
+  int ToolRestat(const bushi::Options* options, int argc, char* argv[]);
+  int ToolUrtle(const bushi::Options* options, int argc, char** argv);
+  int ToolRules(const bushi::Options* options, int argc, char* argv[]);
+  int ToolWinCodePage(const bushi::Options* options, int argc, char* argv[]);
 
   /// Open the build log.
   /// @return false on error.
@@ -340,7 +340,7 @@ bool NinjaMain::CollectTargetsFromArgs(int argc, char* argv[],
   return true;
 }
 
-int NinjaMain::ToolGraph(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolGraph(const bushi::Options* options, int argc, char* argv[]) {
   vector<Node*> nodes;
   string err;
   if (!CollectTargetsFromArgs(argc, argv, &nodes, &err)) {
@@ -357,7 +357,7 @@ int NinjaMain::ToolGraph(const Options* options, int argc, char* argv[]) {
   return 0;
 }
 
-int NinjaMain::ToolQuery(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolQuery(const bushi::Options* options, int argc, char* argv[]) {
   if (argc == 0) {
     Error("expected a target to query");
     return 1;
@@ -421,20 +421,20 @@ int NinjaMain::ToolQuery(const Options* options, int argc, char* argv[]) {
 }
 
 #if defined(NINJA_HAVE_BROWSE)
-int NinjaMain::ToolBrowse(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolBrowse(const bushi::Options* options, int argc, char* argv[]) {
   RunBrowsePython(&state_, ninja_command_, options->input_file, argc, argv);
   // If we get here, the browse failed.
   return 1;
 }
 #else
-int NinjaMain::ToolBrowse(const Options*, int, char**) {
+int NinjaMain::ToolBrowse(const bushi::Options*, int, char**) {
   Fatal("browse tool not supported on this platform");
   return 1;
 }
 #endif
 
 #if defined(_WIN32)
-int NinjaMain::ToolMSVC(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolMSVC(const bushi::Options* options, int argc, char* argv[]) {
   // Reset getopt: push one argument onto the front of argv, reset optind.
   argc++;
   argv--;
@@ -509,7 +509,7 @@ int ToolTargetsList(State* state) {
   return 0;
 }
 
-int NinjaMain::ToolDeps(const Options* options, int argc, char** argv) {
+int NinjaMain::ToolDeps(const bushi::Options* options, int argc, char** argv) {
   vector<Node*> nodes;
   if (argc == 0) {
     for (vector<Node*>::const_iterator ni = deps_log_.nodes().begin();
@@ -549,7 +549,7 @@ int NinjaMain::ToolDeps(const Options* options, int argc, char** argv) {
   return 0;
 }
 
-int NinjaMain::ToolMissingDeps(const Options* options, int argc, char** argv) {
+int NinjaMain::ToolMissingDeps(const bushi::Options* options, int argc, char** argv) {
   vector<Node*> nodes;
   string err;
   if (!CollectTargetsFromArgs(argc, argv, &nodes, &err)) {
@@ -569,7 +569,7 @@ int NinjaMain::ToolMissingDeps(const Options* options, int argc, char** argv) {
   return 0;
 }
 
-int NinjaMain::ToolTargets(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolTargets(const bushi::Options* options, int argc, char* argv[]) {
   int depth = 1;
   if (argc >= 1) {
     string mode = argv[0];
@@ -609,7 +609,7 @@ int NinjaMain::ToolTargets(const Options* options, int argc, char* argv[]) {
   }
 }
 
-int NinjaMain::ToolRules(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolRules(const bushi::Options* options, int argc, char* argv[]) {
   // Parse options.
 
   // The rules tool uses getopt, and expects argv[0] to contain the name of
@@ -659,7 +659,7 @@ int NinjaMain::ToolRules(const Options* options, int argc, char* argv[]) {
 }
 
 #ifdef _WIN32
-int NinjaMain::ToolWinCodePage(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolWinCodePage(const bushi::Options* options, int argc, char* argv[]) {
   if (argc != 0) {
     printf("usage: ninja -t wincodepage\n");
     return 1;
@@ -686,7 +686,7 @@ void PrintCommands(Edge* edge, EdgeSet* seen, PrintCommandMode mode) {
     puts(edge->EvaluateCommand().c_str());
 }
 
-int NinjaMain::ToolCommands(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolCommands(const bushi::Options* options, int argc, char* argv[]) {
   // The commands tool uses getopt, and expects argv[0] to contain the name of
   // the tool, i.e. "commands".
   ++argc;
@@ -744,7 +744,7 @@ void CollectInputs(Edge* edge, std::set<Edge*>* seen,
   }
 }
 
-int NinjaMain::ToolInputs(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolInputs(const bushi::Options* options, int argc, char* argv[]) {
   // The inputs tool uses getopt, and expects argv[0] to contain the name of
   // the tool, i.e. "inputs".
   argc++;
@@ -763,7 +763,7 @@ int NinjaMain::ToolInputs(const Options* options, int argc, char* argv[]) {
 "\n"
 "List all inputs used for a set of targets. Note that this includes\n"
 "explicit, implicit and order-only inputs, but not validation ones.\n\n"
-"Options:\n"
+"bushi::Options:\n"
 "  -h, --help   Print this message.\n");
       // clang-format on
       return 1;
@@ -794,7 +794,7 @@ int NinjaMain::ToolInputs(const Options* options, int argc, char* argv[]) {
   return 0;
 }
 
-int NinjaMain::ToolClean(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolClean(const bushi::Options* options, int argc, char* argv[]) {
   // The clean tool uses getopt, and expects argv[0] to contain the name of
   // the tool, i.e. "clean".
   argc++;
@@ -843,7 +843,7 @@ int NinjaMain::ToolClean(const Options* options, int argc, char* argv[]) {
   }
 }
 
-int NinjaMain::ToolCleanDead(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolCleanDead(const bushi::Options* options, int argc, char* argv[]) {
   Cleaner cleaner(&state_, config_, &disk_interface_);
   return cleaner.CleanDead(build_log_.entries());
 }
@@ -890,7 +890,7 @@ void printCompdb(const char* const directory, const Edge* const edge,
   printf("\"\n  }");
 }
 
-int NinjaMain::ToolCompilationDatabase(const Options* options, int argc,
+int NinjaMain::ToolCompilationDatabase(const bushi::Options* options, int argc,
                                        char* argv[]) {
   // The compdb tool uses getopt, and expects argv[0] to contain the name of
   // the tool, i.e. "compdb".
@@ -963,7 +963,7 @@ int NinjaMain::ToolCompilationDatabase(const Options* options, int argc,
   return 0;
 }
 
-int NinjaMain::ToolRecompact(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolRecompact(const bushi::Options* options, int argc, char* argv[]) {
   if (!EnsureBuildDirExists())
     return 1;
 
@@ -974,7 +974,7 @@ int NinjaMain::ToolRecompact(const Options* options, int argc, char* argv[]) {
   return 0;
 }
 
-int NinjaMain::ToolRestat(const Options* options, int argc, char* argv[]) {
+int NinjaMain::ToolRestat(const bushi::Options* options, int argc, char* argv[]) {
   // The restat tool uses getopt, and expects argv[0] to contain the name of the
   // tool, i.e. "restat"
   argc++;
@@ -1032,7 +1032,7 @@ int NinjaMain::ToolRestat(const Options* options, int argc, char* argv[]) {
   return EXIT_SUCCESS;
 }
 
-int NinjaMain::ToolUrtle(const Options* options, int argc, char** argv) {
+int NinjaMain::ToolUrtle(const bushi::Options* options, int argc, char** argv) {
   // RLE encoded.
   const char* urtle =
 " 13 ,3;2!2;\n8 ,;<11!;\n5 `'<10!(2`'2!\n11 ,6;, `\\. `\\9 .,c13$ec,.\n6 "
@@ -1176,7 +1176,7 @@ bool DebugEnable(const string& name) {
 
 /// Set a warning flag.  Returns false if Ninja should exit instead of
 /// continuing.
-bool WarningEnable(const string& name, Options* options) {
+bool WarningEnable(const string& name, bushi::Options* options) {
   if (name == "list") {
     printf("warning flags:\n"
 "  phonycycle={err,warn}  phony build statement references itself\n"
@@ -1396,7 +1396,7 @@ class DeferGuessParallelism {
 /// Parse argv for command-line options.
 /// Returns an exit code, or -1 if Ninja should continue.
 int ReadFlags(int* argc, char*** argv,
-              Options* options, BuildConfig* config) {
+              bushi::Options* options, BuildConfig* config) {
   DeferGuessParallelism deferGuessParallelism(config);
 
   enum { OPT_VERSION = 1, OPT_QUIET = 2 };
@@ -1494,7 +1494,7 @@ int real_main(int argc, char** argv) {
   // Use exit() instead of return in this function to avoid potentially
   // expensive cleanup when destructing NinjaMain.
   BuildConfig config;
-  Options options = {};
+  bushi::Options options = {};
   options.input_file = "build.bushi";
   options.dupe_edges_should_err = true;
 
@@ -1508,7 +1508,7 @@ int real_main(int argc, char** argv) {
   return bushi_execute(argc, argv, config, options);
 }
 
-int bushi_execute(int argc, char** argv, BuildConfig& config, Options& options) {
+int bushi_execute(int argc, char** argv, BuildConfig& config, bushi::Options& options) {
   setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
   const char* ninja_command = argv[0];
 

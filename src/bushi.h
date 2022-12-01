@@ -6,6 +6,8 @@
 
 struct Tool;
 
+namespace bushi {
+
 /// Command-line options.
 struct Options {
   /// Build file to load.
@@ -24,11 +26,12 @@ struct Options {
   bool phony_cycle_should_err;
 };
 
+} // namespace
 
 // bushi main entry point
 
 int bushi_main(int argc, char** argv);
 
-int bushi_execute(int argc, char** argv, BuildConfig& config, Options& options);
+int bushi_execute(int argc, char** argv, BuildConfig& config, bushi::Options& options);
 
 const Tool* ChooseTool(const std::string& tool_name);
