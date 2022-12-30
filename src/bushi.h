@@ -3,6 +3,7 @@
 #include <string>
 
 #include "build.h"
+#include "status.h"
 
 struct Tool;
 
@@ -24,6 +25,10 @@ struct Options {
 
   /// Whether phony cycles should warn or print an error.
   bool phony_cycle_should_err;
+
+  Status *status;
+
+  Options() : input_file(NULL), working_dir(NULL), tool(NULL), dupe_edges_should_err(false), phony_cycle_should_err(false), status(NULL) {}
 };
 
 } // namespace

@@ -1494,7 +1494,7 @@ int real_main(int argc, char** argv) {
   // Use exit() instead of return in this function to avoid potentially
   // expensive cleanup when destructing NinjaMain.
   BuildConfig config;
-  bushi::Options options = {};
+  bushi::Options options;
   options.input_file = "build.bushi";
   options.dupe_edges_should_err = true;
 
@@ -1512,7 +1512,12 @@ int bushi_execute(int argc, char** argv, BuildConfig& config, bushi::Options& op
   setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
   const char* ninja_command = argv[0];
 
-  Status* status = new StatusPrinter(config);
+  Status* status = nullptr;
+  if (options.status != nullptr)
+    status = options.status;
+
+  if (status == nullptr)
+    Status* status = new StatusPrinter(config);
 
   if (options.working_dir) {
     // The formatting of this string, complete with funny quotes, is
